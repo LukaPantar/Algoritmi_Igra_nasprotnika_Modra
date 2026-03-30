@@ -1,1 +1,1 @@
-# Algoritmi_Igra_nasprotnika_Modra
+# Algoritmi Igra nasprotnika - Modra

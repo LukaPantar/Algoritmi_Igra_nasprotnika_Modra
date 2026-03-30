@@ -1,0 +1,15 @@
+{
+    "version": 10,
+    "configurePresets": [
+        {
+            "name": "default",
+            "displayName": "GCC 15.2.1 x86_64-pc-linux-gnu",
+            "description": "Using compilers: C = /usr/bin/gcc",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "/usr/bin/gcc",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        }
+    ]
+}
