@@ -1,12 +1,21 @@
 #ifndef CTEST_H
 #define CTEST_H
 
+// SYSTEM LIBS //////////////////////////////////////////////////////////////////////////
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
 
+// MACROS ////////////////////////////////////////////////////////////////////////////////
+#define OUT_FEXT ".out"
+#define TXT_FEXT ".txt"
+#define TESTS_FPATH "../tests/"
+
+#define MAX_FPATH_LEN 100
+
+// FUNCTIONS //////////////////////////////////////////////////////////////////////////////
 /**
  * @brief enum structure that holds the test state
  * 
@@ -241,8 +250,6 @@ void assertBinSizes(CTest* test, int numElements, double elements[], int numBins
 {
     Test *newTest = startTest(test, description, skip);
     if (!newTest) return;
-
-    // TODO check if all items are in bins and no duplications
 
     // Check if all bins are full
     newTest->testStatus = PASSED;

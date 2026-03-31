@@ -27,17 +27,6 @@
         "kind": "build",
         "isDefault": true
       }
-    },
-    {
-      "label": "run tests",
-      "type": "shell",
-      "command": "ctest",
-      "args": [
-        "--test-dir",
-        "build",
-        "--output-on-failure"
-      ],
-      "dependsOn": "cmake build"
     }
   ]
 }

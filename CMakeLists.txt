@@ -12,6 +12,7 @@ target_link_libraries(game_of_adversary core)
 
 target_compile_options(${PROJECT_NAME} PRIVATE -O0 -g)
 
+# Testing
 include(CTest)
 enable_testing()
 
@@ -23,5 +24,5 @@ target_compile_options(test_runner PRIVATE -O0 -g)
 add_test(
     NAME bins_test
     COMMAND test_runner
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/tests
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src
 )

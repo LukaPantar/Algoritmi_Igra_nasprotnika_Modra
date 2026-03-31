@@ -6,13 +6,15 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/game_of_adversary",
-            "args": [],
+            "args": [
+                "${workspaceFolder}/tests/1.txt"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "externalConsole": true,
+            "externalConsole": false,
             "MIMode": "gdb",
-            "miDebuggerPath": "/usr/bin/gcc",
+            "miDebuggerPath": "/usr/bin/gdb",
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",
@@ -20,6 +22,17 @@
                     "ignoreFailures": true
                 }
             ],
+            "preLaunchTask": "cmake build"
+        },
+        {
+            "name": "gcc - Build and run",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/game_of_adversary",
+            "args": [
+                "${workspaceFolder}/tests/1.txt"
+            ],
+            "cwd": "${workspaceFolder}",
             "preLaunchTask": "cmake build"
         },
         {

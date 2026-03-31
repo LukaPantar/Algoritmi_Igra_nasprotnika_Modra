@@ -1,33 +1,30 @@
 
+// SYSTEM LIBS //////////////////////////////////////////////////////////////////////////
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+// IMPORTED LIBS //////////////////////////////////////////////////////////////////////////
 #include "CTest.h"
 #include "core.h"
 
-#define IN_FNAME "in_"
-#define OUT_FNAME "out_"
-#define TXT_FILE_EXT ".txt"
-
-#define MAX_FNAME_LEN 50
-
-
 void testBins(CTest *test, char* fname)
 {
-    // TODO execute the core function
-
     FILE* inFptr;
-    char inFullFname[MAX_FNAME_LEN];
-    strcpy(inFullFname, IN_FNAME);
-    strcat(inFullFname, fname); 
-    strcat(inFullFname, TXT_FILE_EXT);
+    char inFullFpath[MAX_FPATH_LEN];
+    snprintf(inFullFpath, MAX_FPATH_LEN, "%s%s%s", TESTS_FPATH, fname, TXT_FEXT);
 
-    inFptr = fopen(inFullFname, "r");
+    // MAIN ALGORITHM /////////////////////////////////////////////////////////////////////
+    mainAlgorithm(inFullFpath);
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+    // Read input file
+    inFptr = fopen(inFullFpath, "r");
     if (inFptr == NULL)
     {
+        printf("%s\n", inFullFpath);
         printRed("The input file is not exist!");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     int numElements;
@@ -39,17 +36,16 @@ void testBins(CTest *test, char* fname)
     }
     fclose(inFptr);
 
+    // Read output file
     FILE* outFptr;
-    char outFullFname[MAX_FNAME_LEN];
-    strcpy(outFullFname, OUT_FNAME);
-    strcat(outFullFname, fname); 
-    strcat(outFullFname, TXT_FILE_EXT); 
+    char outFullFpath[MAX_FPATH_LEN];
+    snprintf(outFullFpath, MAX_FPATH_LEN, "%s%s%s", TESTS_FPATH, fname, OUT_FEXT);
 
-    outFptr = fopen(outFullFname, "r");
+    outFptr = fopen(outFullFpath, "r");
     if (outFptr == NULL)
     {
         printRed("The output file is not exist!");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     int numBins;
@@ -63,7 +59,7 @@ void testBins(CTest *test, char* fname)
     int ch;
     while ((ch = fgetc(outFptr)) != '\n' && ch != EOF);
     
-    char line[256];  // TODO
+    char line[256];
     for (int i = 0; i < numBins; i++) 
     {
         int j = 0;
@@ -79,9 +75,9 @@ void testBins(CTest *test, char* fname)
         }
         numBinsEl[i] = j;
     }
-
     fclose(outFptr);
 
+    // Main tests
     assertBinElements(test, numElements, numBins, numBinsEl, bins, "Check bin elements", false);
     assertBinSizes(test, numElements, elements, numBins, numBinsEl, bins, "Check bin size", false);
 
