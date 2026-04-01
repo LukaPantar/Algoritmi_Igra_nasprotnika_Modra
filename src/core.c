@@ -121,17 +121,39 @@ void mainAlgorithm(char* inFpath)
     printf("Save the output file: %lf s\n", (double)(stopOutFileTime - startOutFileTime) / CLOCKS_PER_SEC);
 #endif  // SAVE_OUTPUT_FILE
 
-    // Print results
-    printf("\n");
-    printf("Total number of bins: %d\n", bins->len);
+    // Print results ////////////////////////////////////////////////////////////////////////////////////////
+
     int filteredLen = 0;
+    double totalOverhead = 0;
+    double maxOverhead = 0;
+    double totalUnused = 0;
+    double maxUnused = 0;
     for (int i = 0; i < bins->len; i++)
-        if (bins->b[i].size >= 1)
+    {
+        double binSize = bins->b[i].size;
+        if (binSize >= 1)
+        {
             filteredLen++;
-    printf("Number of filled bins: %d\n", filteredLen);
-    printf("Total time: %lf\n", (double) (stopInFileTime - startInFileTime) + 
-                                        (stopNaiveSortTime - startNaiveSortTime) + 
-                                        (stopOutFileTime - startOutFileTime) / CLOCKS_PER_SEC);
+            totalOverhead += binSize - 1;
+            if (binSize - 1 > maxOverhead)
+                maxOverhead = binSize - 1;
+        }
+        else
+        {
+            totalUnused += binSize;
+            if (binSize > maxUnused)
+                maxUnused = binSize;
+        }
+    }
+
+    printf("\n");
+    printf("Number of bins: %d [Full %d] [Not full %d]\n", bins->len, filteredLen, bins->len - filteredLen);
+    printf("Overhead: %lf [Average %lf] [Max %lf]\n", totalOverhead, totalOverhead / filteredLen, maxOverhead);
+    if (bins->len - filteredLen)
+        printf("Unused: %lf [Average %lf] [Max %lf]\n", totalUnused, totalUnused / (bins->len - filteredLen), maxUnused);
+    printf("Total time: %lf s\n", (double) (stopInFileTime - startInFileTime) / CLOCKS_PER_SEC + 
+                                  (double) (stopNaiveSortTime - startNaiveSortTime) / CLOCKS_PER_SEC + 
+                                  (double) (stopOutFileTime - startOutFileTime) / CLOCKS_PER_SEC);
 
     // Free /////////////////////////////////////////////////////////////////////////////////////////////////
     free(elements->el);
