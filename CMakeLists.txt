@@ -1,7 +1,7 @@
 # Enable verbose output
 set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "ON" FORCE)
 
-cmake_minimum_required(VERSION 4.3)
+cmake_minimum_required(VERSION 3.2)
 project(game_of_adversary LANGUAGES C ASM)
 
 add_library(core src/core.c)
