@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/game_of_adversary",
             "args": [
-                "${workspaceFolder}/tests/1.txt"
+                "${workspaceFolder}/tests/base.txt"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -30,7 +30,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/game_of_adversary",
             "args": [
-                "${workspaceFolder}/tests/1.txt"
+                "${workspaceFolder}/tests/base.txt"
             ],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "cmake build"

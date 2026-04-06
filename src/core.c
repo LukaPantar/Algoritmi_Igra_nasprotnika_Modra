@@ -88,8 +88,8 @@ void processOutput(Elements* elementsData, BinsCollection* bins, OutputData* out
     }
 
     // sort element indices by bin idx
-    int binInsertedElementCount[outData->validBinCount];
-    memset(&binInsertedElementCount, 0, sizeof(binInsertedElementCount));
+    int binInsertedElementCount[bins->count];
+    memset(binInsertedElementCount, 0, sizeof(binInsertedElementCount));
     outData->sortedElementIdxs = malloc(elementsData->count * sizeof(int));
     for (int i = 0; i < elementsData->count; i++)
     {
@@ -124,11 +124,11 @@ void naiveSort(Elements* elementsData, BinsCollection* bins)
 
     for (int elIdx = 0; elIdx < elementsData->count; elIdx++)
     {
-        insertElement(elementsData, bins, currentBinIdx, elIdx);
         if (bins->array[currentBinIdx].sum >= 1.0)
         {
             initBin(bins, ++currentBinIdx);
         }
+        insertElement(elementsData, bins, currentBinIdx, elIdx);
     }
 
     bins->count = currentBinIdx + 1;
@@ -136,6 +136,9 @@ void naiveSort(Elements* elementsData, BinsCollection* bins)
 
 void mainAlgorithm(char* inFpath)
 {
+    printf("------------------------------------------------------------\n");
+    printf("File path %s\n", inFpath);
+
     clock_t startInFileTime = clock();
     Elements elementsData;
     readInputFile(inFpath, &elementsData);
@@ -167,6 +170,7 @@ void mainAlgorithm(char* inFpath)
     printf("\n");
     printf("Number of bins: %d\n", outData.validBinCount);
     printf("Total time: %lf s\n", readFileTime + computeTime + writeFileTime);
+    printf("------------------------------------------------------------\n");
 
     // Free /////////////////////////////////////////////////////////////////////////////////////////////////
     free(outData.sortedElementIdxs);

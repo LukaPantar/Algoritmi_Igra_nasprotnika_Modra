@@ -91,7 +91,8 @@ int main()
 {
     CTest *test = createCTest();  // Setup test
     
-    testBins(test, "1");
+    testBins(test, "base");
+    testBins(test, "uniform");
       
     run(test);                  // Run test
 }

@@ -95,7 +95,7 @@ def optimal_solver(values: list):
     
 
 if __name__=="__main__":
-    fname = "uniform_30.txt"
+    fname = "uniform.txt"
     values = gen_random_uniform(30)
     write_input_file(values, fname)
 
@@ -103,7 +103,6 @@ if __name__=="__main__":
     optimal_bins = optimal_solver(values)
     stop_solve_optimal = time.time()
     
-    write_output_file(optimal_bins, fname)
-
-    print(f"Time for optimal solution: {stop_solve_optimal - start_solve_optimal} s")
-
+    if 'optimal_bins' in locals():
+        write_output_file(optimal_bins, fname)
+        print(f"Time for optimal solution: {stop_solve_optimal - start_solve_optimal} s")
