@@ -9,22 +9,29 @@
 // STRUCTS ////////////////////////////////////////////////////////////////////////////////
 typedef struct _Elements_
 {
-    int len;       // Number of elements
-    double* el;    // Array of elements
+    int count;
+    double* array;
+    int* binIdxs;
 } Elements;
 
 typedef struct _Bin_
 {
-    double size;   // Current size of bin
-    int lenEl;     // Number of elements in the bin
-    int* elIdx;   // Indexes of elements in the bin
+    double sum;
+    int elementCount;
 } Bin;
 
-typedef struct _Bins_
+typedef struct _BinsCollection_
 {
-    int len;       // Number of bins
-    Bin* b;       // Array of bins
-} Bins;
+    int count;
+    Bin* array;
+} BinsCollection;
+
+typedef struct _OutputData_
+{
+    int validBinCount;     // number of valid bins (el sum >= 1)
+    int* binOffsets;  // per bin element offsets
+    int* sortedElementIdxs; // element indices sorted by bin idx
+} OutputData;
 
 
 // USER DEFINES ////////////////////////////////////////////////////////////////////////////

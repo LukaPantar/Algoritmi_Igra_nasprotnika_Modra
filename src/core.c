@@ -8,7 +8,7 @@
 // IMPORTED LIBS //////////////////////////////////////////////////////////////////////////
 #include "core.h"
 
-Elements* readInputFile(char* inFpath)
+void readInputFile(char* inFpath, Elements* elementsData)
 {
     FILE* fPtr;
     fPtr = fopen(inFpath, "r");
@@ -18,20 +18,17 @@ Elements* readInputFile(char* inFpath)
         exit(EXIT_FAILURE);
     }
 
-    Elements* elements = malloc(sizeof(Elements));
-
-    fscanf(fPtr, "%d", &(elements->len));
-    elements->el = malloc(elements->len * sizeof(double));
-    for (int i = 0; i < elements->len; i++)
+    fscanf(fPtr, "%d", &(elementsData->count));
+    elementsData->array = malloc(elementsData->count * sizeof(double));
+    for (int i = 0; i < elementsData->count; i++)
     {
-        fscanf(fPtr, "%lf", &(elements->el[i]));
+        fscanf(fPtr, "%lf", &(elementsData->array[i]));
     }
+    elementsData->binIdxs = malloc(elementsData->count * sizeof(int));
     fclose(fPtr);
-
-    return elements;
 }
 
-void saveOutputFile(char* inFpath, Bins* bins)
+void saveOutputFile(char* inFpath, OutputData* output)
 {
     char fullFpath[MAX_FPATH_LEN];
     strcpy(fullFpath, inFpath);
@@ -54,114 +51,127 @@ void saveOutputFile(char* inFpath, Bins* bins)
         exit(EXIT_FAILURE);
     }
 
-    int filteredLen = 0;
-    for (int i = 0; i < bins->len; i++)
-        if (bins->b[i].size >= 1)
-            filteredLen++;
-    fprintf(fPtr, "%d\n", filteredLen);
-    
-    for (int i = 0; i < bins->len; i++) 
+    fprintf(fPtr, "%d\n", output->validBinCount);
+    for (int i = 0; i < output->validBinCount; i++)
     {
-        if (bins->b[i].size >= 1)
+        int startIdx = output->binOffsets[i];
+        int end = output->binOffsets[i + 1];
+        for (int j = startIdx; j < end; j++)
         {
-            for (int j = 0; j < bins->b[i].lenEl; j++)
-            {
-                fprintf(fPtr, "%d ", (bins->b[i].elIdx[j] + 1));
-            }
-            fprintf(fPtr, "\n");
+            fprintf(fPtr, "%d ", output->sortedElementIdxs[j]);
         }
+
+        fprintf(fPtr, "\n");
     }
     fclose(fPtr);
 }
 
-/**
- * @brief Naive implementaiton of sort. If the previous bin is not filled, the next element is added.
- * 
- */
-Bins* naiveSort(Elements* elements)
+void processOutput(Elements* elementsData, BinsCollection* bins, OutputData* outData)
 {
-    Bins* bins = malloc(sizeof(Bins));
-    bins->b = malloc(sizeof(Bin) * elements->len); // TODO currently the allocated size is maximum possible
-    bins->len = 0;
-
-    for (int i = 0; i < elements->len; i++)
+    // count valid bins
+    outData->validBinCount = 0;
+    for (int i = 0; i < bins->count; i++)
     {
-        if (bins->len == 0 || bins->b[bins->len - 1].size >= 1)
+        if (bins->array[i].sum >= 1.0)
         {
-            bins->b[bins->len].size = 0;
-            bins->b[bins->len].lenEl = 0;
-            bins->b[bins->len].elIdx = malloc(sizeof(int) * elements->len); // TODO currently the allocated size is maximum possible
-            bins->len++;
+            outData->validBinCount++;
         }
-
-        bins->b[bins->len - 1].size += elements->el[i];
-        bins->b[bins->len - 1].elIdx[bins->b[bins->len - 1].lenEl] = i;
-        bins->b[bins->len - 1].lenEl++;
     }
 
-    return bins;
+    // count bin offsets
+    int offsetsCount = bins->count + 1;
+    outData->binOffsets = malloc(offsetsCount * sizeof(int));
+    outData->binOffsets[0] = 0;
+    for (int i = 1; i < offsetsCount; i++)
+    {
+        outData->binOffsets[i] = outData->binOffsets[i - 1] + bins->array[i - 1].elementCount;
+    }
+
+    // sort element indices by bin idx
+    int binInsertedElementCount[outData->validBinCount];
+    memset(&binInsertedElementCount, 0, sizeof(binInsertedElementCount));
+    outData->sortedElementIdxs = malloc(elementsData->count * sizeof(int));
+    for (int i = 0; i < elementsData->count; i++)
+    {
+        int binIdx = elementsData->binIdxs[i];
+        int offset = outData->binOffsets[binIdx] + binInsertedElementCount[binIdx];
+        // insert element at offset (binOffset + elementOffset)
+        outData->sortedElementIdxs[offset] = i + 1;
+        
+        binInsertedElementCount[binIdx]++; // increment element offset
+    }
+}
+
+// bin sorting utils:
+void insertElement(Elements* elementsData, BinsCollection* bins, int binIdx, int elementIdx)
+{
+    elementsData->binIdxs[elementIdx] = binIdx;
+    bins->array[binIdx].sum += elementsData->array[elementIdx];
+    bins->array[binIdx].elementCount++;
+}
+
+void initBin(BinsCollection* bins, int binIdx)
+{
+    bins->array[binIdx].sum = 0.0;
+    bins->array[binIdx].elementCount = 0;
+}
+
+// bin sorting algorithms:
+void naiveSort(Elements* elementsData, BinsCollection* bins)
+{
+    int currentBinIdx = 0;
+    initBin(bins, 0);
+
+    for (int elIdx = 0; elIdx < elementsData->count; elIdx++)
+    {
+        insertElement(elementsData, bins, currentBinIdx, elIdx);
+        if (bins->array[currentBinIdx].sum >= 1.0)
+        {
+            initBin(bins, ++currentBinIdx);
+        }
+    }
+
+    bins->count = currentBinIdx + 1;
 }
 
 void mainAlgorithm(char* inFpath)
 {
     clock_t startInFileTime = clock();
-    Elements* elements = readInputFile(inFpath);
+    Elements elementsData;
+    readInputFile(inFpath, &elementsData);
     clock_t stopInFileTime = clock();
     printf("Open and parse input file: %lf s\n", (double)(stopInFileTime - startInFileTime) / CLOCKS_PER_SEC);
 
     clock_t startNaiveSortTime = clock();
-    Bins* bins = naiveSort(elements);
+    BinsCollection bins;
+    bins.count = 0;
+    bins.array = malloc(elementsData.count * sizeof(Bin));
+    naiveSort(&elementsData, &bins);
     clock_t stopNaiveSortTime = clock();
     printf("Naive sorting: %lf s\n", (double)(stopNaiveSortTime - startNaiveSortTime) / CLOCKS_PER_SEC);
 
 #ifdef SAVE_OUTPUT_FILE
     clock_t startOutFileTime = clock();
-    saveOutputFile(inFpath, bins);
+    OutputData outData;
+    processOutput(&elementsData, &bins, &outData);
+    saveOutputFile(inFpath, &outData);
     clock_t stopOutFileTime = clock();
     printf("Save the output file: %lf s\n", (double)(stopOutFileTime - startOutFileTime) / CLOCKS_PER_SEC);
 #endif  // SAVE_OUTPUT_FILE
 
     // Print results ////////////////////////////////////////////////////////////////////////////////////////
-
-    int filteredLen = 0;
-    double totalOverhead = 0;
-    double maxOverhead = 0;
-    double totalUnused = 0;
-    double maxUnused = 0;
-    for (int i = 0; i < bins->len; i++)
-    {
-        double binSize = bins->b[i].size;
-        if (binSize >= 1)
-        {
-            filteredLen++;
-            totalOverhead += binSize - 1;
-            if (binSize - 1 > maxOverhead)
-                maxOverhead = binSize - 1;
-        }
-        else
-        {
-            totalUnused += binSize;
-            if (binSize > maxUnused)
-                maxUnused = binSize;
-        }
-    }
+    double readFileTime = (double) (stopInFileTime - startInFileTime) / CLOCKS_PER_SEC;
+    double computeTime = (double) (stopNaiveSortTime - startNaiveSortTime) / CLOCKS_PER_SEC;
+    double writeFileTime = (double) (stopOutFileTime - startOutFileTime) / CLOCKS_PER_SEC;
 
     printf("\n");
-    printf("Number of bins: %d [Full %d] [Not full %d]\n", bins->len, filteredLen, bins->len - filteredLen);
-    printf("Overhead: %lf [Average %lf] [Max %lf]\n", totalOverhead, totalOverhead / filteredLen, maxOverhead);
-    if (bins->len - filteredLen)
-        printf("Unused: %lf [Average %lf] [Max %lf]\n", totalUnused, totalUnused / (bins->len - filteredLen), maxUnused);
-    printf("Total time: %lf s\n", (double) (stopInFileTime - startInFileTime) / CLOCKS_PER_SEC + 
-                                  (double) (stopNaiveSortTime - startNaiveSortTime) / CLOCKS_PER_SEC + 
-                                  (double) (stopOutFileTime - startOutFileTime) / CLOCKS_PER_SEC);
+    printf("Number of bins: %d\n", outData.validBinCount);
+    printf("Total time: %lf s\n", readFileTime + computeTime + writeFileTime);
 
     // Free /////////////////////////////////////////////////////////////////////////////////////////////////
-    free(elements->el);
-    for (int i = 0; i < bins->len; i++)
-    {
-        free(bins->b[i].elIdx);
-    }
-    free(elements);
-    free(bins->b);
-    free(bins);
+    free(outData.sortedElementIdxs);
+    free(outData.binOffsets);
+    free(bins.array);
+    free(elementsData.binIdxs);
+    free(elementsData.array);
 }
