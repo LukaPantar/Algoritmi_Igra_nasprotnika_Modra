@@ -6,7 +6,7 @@
 
 /* --------- Linked List --------- */
 
-typedef struct _Node_ {
+typedef struct Node {
     void* data;
     struct Node* next;
 } Node;
