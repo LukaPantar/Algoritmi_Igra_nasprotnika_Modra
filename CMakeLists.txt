@@ -4,7 +4,11 @@ set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "ON" FORCE)
 cmake_minimum_required(VERSION 4.3)
 project(game_of_adversary LANGUAGES C ASM)
 
-add_library(core src/core.c)
+add_library(core
+    src/core.c
+    src/collectionutils.c
+    src/mathutils.c
+)
 target_include_directories(core PUBLIC include)
 
 add_executable(${PROJECT_NAME} src/main.c)
