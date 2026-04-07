@@ -6,6 +6,8 @@
 #include <time.h>
 
 // IMPORTED LIBS //////////////////////////////////////////////////////////////////////////
+#include "mathutils.h"
+#include "collectionutils.h"
 #include "core.h"
 
 void readInputFile(char* inFpath, Elements* elementsData)
@@ -97,7 +99,7 @@ void processOutput(Elements* elementsData, BinsCollection* bins, OutputData* out
         int offset = outData->binOffsets[binIdx] + binInsertedElementCount[binIdx];
         // insert element at offset (binOffset + elementOffset)
         outData->sortedElementIdxs[offset] = i + 1;
-        
+
         binInsertedElementCount[binIdx]++; // increment element offset
     }
 }
@@ -108,12 +110,29 @@ void insertElement(Elements* elementsData, BinsCollection* bins, int binIdx, int
     elementsData->binIdxs[elementIdx] = binIdx;
     bins->array[binIdx].sum += elementsData->array[elementIdx];
     bins->array[binIdx].elementCount++;
+
+#ifdef DEBUG_TRACE
+    printf("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-*\n");
+    printf("Element %d (value: %lf) -> Bin %d\n", elementIdx + 1, elementsData->array[elementIdx], binIdx);
+    printf("Bin %d: sum = %lf, elementCount = %d\n", binIdx, bins->array[binIdx].sum, bins->array[binIdx].elementCount);
+#endif
 }
 
-void initBin(BinsCollection* bins, int binIdx)
+Bin* initBin(BinsCollection* bins, int binIdx)
 {
+    bins->array[binIdx].idx = binIdx;
     bins->array[binIdx].sum = 0.0;
     bins->array[binIdx].elementCount = 0;
+
+    int newCount = binIdx + 1;
+    bins->count = max(newCount, bins->count);
+
+#ifdef DEBUG_TRACE
+    printf("+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-*\n");
+    printf("Init bin %d\n", binIdx);
+#endif
+
+    return &(bins->array[binIdx]);
 }
 
 // bin sorting algorithms:
@@ -130,8 +149,71 @@ void naiveSort(Elements* elementsData, BinsCollection* bins)
         }
         insertElement(elementsData, bins, currentBinIdx, elIdx);
     }
+}
 
-    bins->count = currentBinIdx + 1;
+void newImpl(Elements* elementsData, BinsCollection* bins)
+{
+    LinkedList* openBins = linkedListCreate();
+    int currentBinIdx = 0;
+    linkedListPushBack(openBins, initBin(bins, 0));
+
+    const double MAX_OVERFLOW = 1.4;
+
+    // insert first element to first bin
+    insertElement(elementsData, bins, 0, 0);
+
+    for (int elIdx = 1; elIdx < elementsData->count; elIdx++)
+    {
+        double item = elementsData->array[elIdx];
+
+        // calculate dynamic threshold
+        double progress = (double)elIdx / elementsData->count;
+        double currentThreshold = MAX_OVERFLOW * progress;
+
+        // find best fit
+        Node* bestBinNode = NULL;
+        double minOverflow = 1.0;
+
+        LINKEDLIST_FOREACH(binNode, openBins)
+        {
+            Bin* b = (Bin*)binNode->data;
+            double newSum = b->sum + item;
+            if (newSum < 1.0)
+            {
+                // insert here
+                bestBinNode = binNode;
+                break;
+            }
+
+            double overflow = newSum - 1.0;
+            if (overflow < minOverflow && overflow <= currentThreshold)
+            {
+                minOverflow = overflow;
+                bestBinNode = binNode;
+            }
+        }
+
+        // insert element to best fit bin or init new
+        if (bestBinNode != NULL)
+        {
+            // insert to best fit bin
+            Bin* b = (Bin*)bestBinNode->data;
+            insertElement(elementsData, bins, b->idx, elIdx);
+            if (b->sum >= 1.0)
+            {
+                likedListRemoveNode(openBins, bestBinNode, false);
+            }
+        }
+        else
+        {
+            // init new bin
+            Bin* newBin = initBin(bins, ++currentBinIdx);
+            insertElement(elementsData, bins, newBin->idx, elIdx);
+            linkedListPushBack(openBins, newBin);
+        }
+    }
+
+    linkedlistDestroy(openBins, false);
 }
 
 void mainAlgorithm(char* inFpath)
@@ -145,13 +227,14 @@ void mainAlgorithm(char* inFpath)
     clock_t stopInFileTime = clock();
     printf("Open and parse input file: %lf s\n", (double)(stopInFileTime - startInFileTime) / CLOCKS_PER_SEC);
 
-    clock_t startNaiveSortTime = clock();
+    printf("------------------------------------------------------------\n");
+    clock_t startSolverTime = clock();
     BinsCollection bins;
     bins.count = 0;
-    bins.array = malloc(elementsData.count * sizeof(Bin));
-    naiveSort(&elementsData, &bins);
-    clock_t stopNaiveSortTime = clock();
-    printf("Naive sorting: %lf s\n", (double)(stopNaiveSortTime - startNaiveSortTime) / CLOCKS_PER_SEC);
+    bins.array = malloc(elementsData.count * sizeof(Bin)); // wort case allocate
+    newImpl(&elementsData, &bins);
+    clock_t stopSolverTime = clock();
+    printf("Solving: %lf s\n", (double)(stopSolverTime - startSolverTime) / CLOCKS_PER_SEC);
 
 #ifdef SAVE_OUTPUT_FILE
     clock_t startOutFileTime = clock();
@@ -164,11 +247,12 @@ void mainAlgorithm(char* inFpath)
 
     // Print results ////////////////////////////////////////////////////////////////////////////////////////
     double readFileTime = (double) (stopInFileTime - startInFileTime) / CLOCKS_PER_SEC;
-    double computeTime = (double) (stopNaiveSortTime - startNaiveSortTime) / CLOCKS_PER_SEC;
+    double computeTime = (double) (stopSolverTime - startSolverTime) / CLOCKS_PER_SEC;
     double writeFileTime = (double) (stopOutFileTime - startOutFileTime) / CLOCKS_PER_SEC;
 
     printf("\n");
-    printf("Number of bins: %d\n", outData.validBinCount);
+    printf("------------------------------------------------------------\n");
+    printf("Number of valid bins: %d\n", outData.validBinCount);
     printf("Total time: %lf s\n", readFileTime + computeTime + writeFileTime);
     printf("------------------------------------------------------------\n");
 

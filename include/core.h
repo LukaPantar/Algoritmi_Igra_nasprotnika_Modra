@@ -16,6 +16,7 @@ typedef struct _Elements_
 
 typedef struct _Bin_
 {
+    int idx;
     double sum;
     int elementCount;
 } Bin;
@@ -36,6 +37,7 @@ typedef struct _OutputData_
 
 // USER DEFINES ////////////////////////////////////////////////////////////////////////////
 // #define PRINT_DEBUG_INFO
+#define DEBUG_TRACE
 #define SAVE_OUTPUT_FILE
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////////////////////
