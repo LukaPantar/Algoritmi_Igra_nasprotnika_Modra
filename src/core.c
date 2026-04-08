@@ -135,8 +135,7 @@ Bin* initBin(BinsCollection* bins, int binIdx)
     return &(bins->array[binIdx]);
 }
 
-// bin sorting algorithms:
-void naiveSort(Elements* elementsData, BinsCollection* bins)
+void naiveAlg(Elements* elementsData, BinsCollection* bins)
 {
     int currentBinIdx = 0;
     initBin(bins, 0);
@@ -151,7 +150,7 @@ void naiveSort(Elements* elementsData, BinsCollection* bins)
     }
 }
 
-void newImpl(Elements* elementsData, BinsCollection* bins)
+void thresholdAlg(Elements* elementsData, BinsCollection* bins)
 {
     LinkedList* openBins = linkedListCreate();
     int currentBinIdx = 0;
@@ -216,6 +215,19 @@ void newImpl(Elements* elementsData, BinsCollection* bins)
     linkedlistDestroy(openBins, false);
 }
 
+void printResults(char* algorithmName, OutputData outData, double computeTime, double readFileTime, double writeFileTime)
+{
+    printf("------------------------------------------------------------\n");
+    printf("Algorithm: %s\n", algorithmName);
+    printf("Open and parse input file: %lf s\n", readFileTime);
+    printf("Solving algorithm: %lf s\n", computeTime);
+    printf("Process and save the output file: %lf s\n", writeFileTime);
+    printf("Number of valid bins: %d\n", outData.validBinCount);
+    printf("Total time: %lf s\n", readFileTime + computeTime + writeFileTime);
+    printf("------------------------------------------------------------\n");
+    printf("\n");
+}
+
 void mainAlgorithm(char* inFpath)
 {
     printf("------------------------------------------------------------\n");
@@ -225,36 +237,39 @@ void mainAlgorithm(char* inFpath)
     Elements elementsData;
     readInputFile(inFpath, &elementsData);
     clock_t stopInFileTime = clock();
-    printf("Open and parse input file: %lf s\n", (double)(stopInFileTime - startInFileTime) / CLOCKS_PER_SEC);
 
-    printf("------------------------------------------------------------\n");
     clock_t startSolverTime = clock();
     BinsCollection bins;
     bins.count = 0;
-    bins.array = malloc(elementsData.count * sizeof(Bin)); // wort case allocate
-    newImpl(&elementsData, &bins);
-    clock_t stopSolverTime = clock();
-    printf("Solving: %lf s\n", (double)(stopSolverTime - startSolverTime) / CLOCKS_PER_SEC);
+    bins.array = malloc(elementsData.count * sizeof(Bin));  // worst case allocate
 
-#ifdef SAVE_OUTPUT_FILE
+#if defined(NAIVE_ALG)
+    char* algorithmName = "Naive";
+    naiveAlg(&elementsData, &bins);
+#elif defined(THRESHOLD_ALG)
+    char* algorithmName = "Threshold";
+    thresholdAlg(&elementsData, &bins);
+#else
+    printf("Please define an algorithm in user defines.");
+    exit(EXIT_FAILURE)
+#endif  // *_ALG
+
+    clock_t stopSolverTime = clock();
+    double computeTime = (double) (stopSolverTime - startSolverTime) / CLOCKS_PER_SEC;
+
     clock_t startOutFileTime = clock();
     OutputData outData;
     processOutput(&elementsData, &bins, &outData);
+
+#ifdef SAVE_OUTPUT_FILE
     saveOutputFile(inFpath, &outData);
-    clock_t stopOutFileTime = clock();
-    printf("Save the output file: %lf s\n", (double)(stopOutFileTime - startOutFileTime) / CLOCKS_PER_SEC);
 #endif  // SAVE_OUTPUT_FILE
 
-    // Print results ////////////////////////////////////////////////////////////////////////////////////////
-    double readFileTime = (double) (stopInFileTime - startInFileTime) / CLOCKS_PER_SEC;
-    double computeTime = (double) (stopSolverTime - startSolverTime) / CLOCKS_PER_SEC;
-    double writeFileTime = (double) (stopOutFileTime - startOutFileTime) / CLOCKS_PER_SEC;
+    clock_t stopOutFileTime = clock();
 
-    printf("\n");
-    printf("------------------------------------------------------------\n");
-    printf("Number of valid bins: %d\n", outData.validBinCount);
-    printf("Total time: %lf s\n", readFileTime + computeTime + writeFileTime);
-    printf("------------------------------------------------------------\n");
+    double readFileTime = (double) (stopInFileTime - startInFileTime) / CLOCKS_PER_SEC;
+    double writeFileTime = (double) (stopOutFileTime - startOutFileTime) / CLOCKS_PER_SEC;
+    printResults(algorithmName, outData, computeTime, readFileTime, writeFileTime);
 
     // Free /////////////////////////////////////////////////////////////////////////////////////////////////
     free(outData.sortedElementIdxs);

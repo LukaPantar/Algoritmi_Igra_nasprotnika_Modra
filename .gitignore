@@ -72,3 +72,4 @@ CMakeUserPresets.json
 
 # Python
 .venv/
+!*_optimal.out

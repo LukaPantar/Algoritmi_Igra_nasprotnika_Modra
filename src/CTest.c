@@ -93,6 +93,10 @@ int main()
     
     testBins(test, "base");
     testBins(test, "uniform");
+    testBins(test, "constant");
+    testBins(test, "linear");
+    testBins(test, "normal");
+    testBins(test, "exponential");
       
     run(test);                  // Run test
 }
