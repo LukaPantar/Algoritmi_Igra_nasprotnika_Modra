@@ -37,11 +37,13 @@ typedef struct _OutputData_
 
 // USER DEFINES ////////////////////////////////////////////////////////////////////////////
 // #define DEBUG_TRACE
+// #define DEBUG_TRACE_BST
 #define SAVE_OUTPUT_FILE
 
 // Define algorith for solving (if more than one is defined, the first defined will be used)
-#define NAIVE_ALG
+// #define NAIVE_ALG
 // #define THRESHOLD_ALG
+#define BINARY_TREE_ALG
 
 // FUNCTIONS ///////////////////////////////////////////////////////////////////////////////
 void mainAlgorithm(char* fname);

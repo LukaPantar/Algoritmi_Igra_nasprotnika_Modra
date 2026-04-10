@@ -2,6 +2,7 @@
 // SYSTEM LIBS //////////////////////////////////////////////////////////////////////////
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <time.h>
 
@@ -21,12 +22,12 @@ void readInputFile(char* inFpath, Elements* elementsData)
     }
 
     fscanf(fPtr, "%d", &(elementsData->count));
-    elementsData->array = malloc(elementsData->count * sizeof(double));
+    elementsData->array = (double*)malloc(elementsData->count * sizeof(double));
     for (int i = 0; i < elementsData->count; i++)
     {
         fscanf(fPtr, "%lf", &(elementsData->array[i]));
     }
-    elementsData->binIdxs = malloc(elementsData->count * sizeof(int));
+    elementsData->binIdxs = (int*)malloc(elementsData->count * sizeof(int));
     fclose(fPtr);
 }
 
@@ -82,7 +83,7 @@ void processOutput(Elements* elementsData, BinsCollection* bins, OutputData* out
 
     // count bin offsets
     int offsetsCount = bins->count + 1;
-    outData->binOffsets = malloc(offsetsCount * sizeof(int));
+    outData->binOffsets = (int*)malloc(offsetsCount * sizeof(int));
     outData->binOffsets[0] = 0;
     for (int i = 1; i < offsetsCount; i++)
     {
@@ -92,7 +93,7 @@ void processOutput(Elements* elementsData, BinsCollection* bins, OutputData* out
     // sort element indices by bin idx
     int binInsertedElementCount[bins->count];
     memset(binInsertedElementCount, 0, sizeof(binInsertedElementCount));
-    outData->sortedElementIdxs = malloc(elementsData->count * sizeof(int));
+    outData->sortedElementIdxs = (int*)malloc(elementsData->count * sizeof(int));
     for (int i = 0; i < elementsData->count; i++)
     {
         int binIdx = elementsData->binIdxs[i];
@@ -133,6 +134,12 @@ Bin* initBin(BinsCollection* bins, int binIdx)
 #endif
 
     return &(bins->array[binIdx]);
+}
+
+void printBinSum(void* data)
+{
+    Bin* b = (Bin*)data;
+    printf("%.6f", b->sum);
 }
 
 void naiveAlg(Elements* elementsData, BinsCollection* bins)
@@ -215,6 +222,86 @@ void thresholdAlg(Elements* elementsData, BinsCollection* bins)
     linkedlistDestroy(openBins, false);
 }
 
+int compareBins(void* a, void* b)
+{
+    double sumA = ((Bin*)a)->sum;
+    double sumB = ((Bin*)b)->sum;
+    if (sumA < sumB) return -1;
+    if (sumA > sumB) return 1;
+    return 0;
+}
+
+void bstAlg(Elements* elementsData, BinsCollection* bins)
+{
+    BinaryTree* openBins = binaryTreeCreate();
+    int currentBinIdx = 0;
+    const double MAX_OVERFLOW = 0.6;
+
+    for (int elIdx = 0; elIdx < elementsData->count; elIdx++)
+    {
+        double item = elementsData->array[elIdx];
+        
+        // calculate dynamic threshold
+        double progress = (double)elIdx / elementsData->count;
+        double currentThreshold = MAX_OVERFLOW * progress;
+
+        // find best fit
+        BinaryTreeNode* bestBinNode = NULL;
+        BinaryTreeNode* current = openBins->root;
+        double targetBinSum = 1.0 - item;
+
+        while (current != NULL)
+        {
+            // Check current bin
+            Bin* b = (Bin*)current->data;
+            
+            double potentialSum = b->sum + item;
+            double overflow = potentialSum - 1.0;
+
+            if (potentialSum <= 1.0 || overflow <= currentThreshold)
+            {
+                if (bestBinNode == NULL || abs(b->sum - targetBinSum) < abs(((Bin*)bestBinNode->data)->sum - targetBinSum))
+                    bestBinNode = current;
+            }
+
+            // BST step down
+            if (targetBinSum < b->sum) 
+                current = current->left;
+            else
+                current = current->right;
+        }
+
+        // insert element into bestBin and reinsert node into BST
+        if (bestBinNode != NULL)
+        {
+            Bin* b = (Bin*)bestBinNode->data;
+
+            binaryTreeBSTRemoveNode(openBins, bestBinNode, false);
+            insertElement(elementsData, bins, b->idx, elIdx);
+
+            // reinsert if sum < 1.0, otherwise the bin is filled
+            if (b->sum < 1.0)
+                binaryTreeBSTInsert(openBins, b, compareBins);
+        }
+        else
+        {
+            // init new bin
+            Bin* newBin = initBin(bins, currentBinIdx++);
+            insertElement(elementsData, bins, newBin->idx, elIdx);
+            if (newBin->sum < 1.0)
+                binaryTreeBSTInsert(openBins, newBin, compareBins);
+        }
+
+#ifdef DEBUG_TRACE_BST
+        printf("\n");
+        printf("+-+-BST-PRINT-+-+-+-+-+-+-+-+-+-+-+-+-+-*\n");
+        binaryTreePrint(openBins, printBinSum);
+#endif
+    }
+
+    binaryTreeDestroy(openBins, false);
+}
+
 void printResults(char* algorithmName, OutputData outData, double computeTime, double readFileTime, double writeFileTime)
 {
     printf("------------------------------------------------------------\n");
@@ -241,7 +328,7 @@ void mainAlgorithm(char* inFpath)
     clock_t startSolverTime = clock();
     BinsCollection bins;
     bins.count = 0;
-    bins.array = malloc(elementsData.count * sizeof(Bin));  // worst case allocate
+    bins.array = (Bin*)malloc(elementsData.count * sizeof(Bin));  // worst case allocate
 
 #if defined(NAIVE_ALG)
     char* algorithmName = "Naive";
@@ -249,6 +336,9 @@ void mainAlgorithm(char* inFpath)
 #elif defined(THRESHOLD_ALG)
     char* algorithmName = "Threshold";
     thresholdAlg(&elementsData, &bins);
+#elif defined(BINARY_TREE_ALG)
+    char* algorithmName = "Binary Search Tree";
+    bstAlg(&elementsData, &bins);
 #else
     printf("Please define an algorithm in user defines.");
     exit(EXIT_FAILURE)
