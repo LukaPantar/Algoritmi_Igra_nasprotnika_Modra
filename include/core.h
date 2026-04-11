@@ -2,9 +2,17 @@
 #ifndef _CORE_H_
 #define _CORE_H_
 
+#include <stdbool.h>
+
 // MACROS ////////////////////////////////////////////////////////////////////////////////
 #define OUT_FEXT ".out"
 #define MAX_FPATH_LEN 100
+
+// USER DEFINES ////////////////////////////////////////////////////////////////////////////
+// #define DEBUG_TRACE
+// #define DEBUG_TRACE_BST
+#define SAVE_OUTPUT_FILE
+#define EXTRA_STATS
 
 // STRUCTS ////////////////////////////////////////////////////////////////////////////////
 typedef struct _Elements_
@@ -30,23 +38,20 @@ typedef struct _BinsCollection_
 typedef struct _OutputData_
 {
     int validBinCount;     // number of valid bins (el sum >= 1)
+    int binsCount;
     int* binOffsets;  // per bin element offsets
     int* sortedElementIdxs; // element indices sorted by bin idx
+    bool* validBinFlags; // if bin at index is valid
 
+#ifdef EXTRA_STATS
     // Extra stats
     int invalidBinCount;
     double maxOverflow;
     double averageOverflow;
     double maxUnderflow;
     double averageUnderflow;
+#endif
 } OutputData;
-
-
-// USER DEFINES ////////////////////////////////////////////////////////////////////////////
-// #define DEBUG_TRACE
-// #define DEBUG_TRACE_BST
-#define SAVE_OUTPUT_FILE
-#define EXTRA_STATS
 
 // Define algorith for solving (if more than one is defined, the first defined will be used)
 // #define NAIVE_ALG

@@ -23,12 +23,12 @@ void readInputFile(char* inFpath, Elements* elementsData)
     }
 
     fscanf(fPtr, "%d", &(elementsData->count));
-    elementsData->array = (double*)malloc(elementsData->count * sizeof(double));
+    elementsData->array = malloc(elementsData->count * sizeof(double));
     for (int i = 0; i < elementsData->count; i++)
     {
         fscanf(fPtr, "%lf", &(elementsData->array[i]));
     }
-    elementsData->binIdxs = (int*)malloc(elementsData->count * sizeof(int));
+    elementsData->binIdxs = malloc(elementsData->count * sizeof(int));
     fclose(fPtr);
 }
 
@@ -56,8 +56,11 @@ void saveOutputFile(char* inFpath, OutputData* output)
     }
 
     fprintf(fPtr, "%d\n", output->validBinCount);
-    for (int i = 0; i < output->validBinCount; i++)
+    for (int i = 0; i < output->binsCount; i++)
     {
+        if (!output->validBinFlags[i])
+            continue;
+
         int startIdx = output->binOffsets[i];
         int end = output->binOffsets[i + 1];
         for (int j = startIdx; j < end; j++)
@@ -72,14 +75,17 @@ void saveOutputFile(char* inFpath, OutputData* output)
 
 void processOutput(Elements* elementsData, BinsCollection* bins, OutputData* outData)
 {
+    outData->binsCount = bins->count;
+
     // count valid bins
     outData->validBinCount = 0;
+    outData->validBinFlags = malloc(bins->count * sizeof(bool));
     for (int i = 0; i < bins->count; i++)
     {
-        if (bins->array[i].sum >= 1.0)
-        {
+        bool isValid = bins->array[i].sum >= 1.0;
+        outData->validBinFlags[i] = isValid;
+        if (isValid)
             outData->validBinCount++;
-        }
     }
 
 #ifdef EXTRA_STATS
@@ -112,7 +118,7 @@ void processOutput(Elements* elementsData, BinsCollection* bins, OutputData* out
 
     // count bin offsets
     int offsetsCount = bins->count + 1;
-    outData->binOffsets = (int*)malloc(offsetsCount * sizeof(int));
+    outData->binOffsets = malloc(offsetsCount * sizeof(int));
     outData->binOffsets[0] = 0;
     for (int i = 1; i < offsetsCount; i++)
     {
@@ -122,7 +128,7 @@ void processOutput(Elements* elementsData, BinsCollection* bins, OutputData* out
     // sort element indices by bin idx
     int binInsertedElementCount[bins->count];
     memset(binInsertedElementCount, 0, sizeof(binInsertedElementCount));
-    outData->sortedElementIdxs = (int*)malloc(elementsData->count * sizeof(int));
+    outData->sortedElementIdxs = malloc(elementsData->count * sizeof(int));
     for (int i = 0; i < elementsData->count; i++)
     {
         int binIdx = elementsData->binIdxs[i];
@@ -368,7 +374,7 @@ void mainAlgorithm(char* inFpath)
     clock_t startSolverTime = clock();
     BinsCollection bins;
     bins.count = 0;
-    bins.array = (Bin*)malloc(elementsData.count * sizeof(Bin));  // worst case allocate
+    bins.array = malloc(elementsData.count * sizeof(Bin));  // worst case allocate
 
 #if defined(NAIVE_ALG)
     char* algorithmName = "Naive";
@@ -404,6 +410,7 @@ void mainAlgorithm(char* inFpath)
     // Free /////////////////////////////////////////////////////////////////////////////////////////////////
     free(outData.sortedElementIdxs);
     free(outData.binOffsets);
+    free(outData.validBinFlags);
     free(bins.array);
     free(elementsData.binIdxs);
     free(elementsData.array);

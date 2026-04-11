@@ -6,7 +6,7 @@
 
 LinkedList* linkedListCreate() 
 {
-    LinkedList* list = (LinkedList*)malloc(sizeof(LinkedList));
+    LinkedList* list = malloc(sizeof(LinkedList));
     if (list) 
     {
         list->head = NULL;
@@ -17,7 +17,7 @@ LinkedList* linkedListCreate()
 
 void linkedListPushBack(LinkedList* list, void* data) 
 {
-    Node* new_node = (Node*)malloc(sizeof(Node));
+    Node* new_node = malloc(sizeof(Node));
     new_node->data = data;
     new_node->next = NULL;
 
@@ -83,7 +83,7 @@ void linkedlistDestroy(LinkedList* list, bool free_data)
 
 BinaryTree* binaryTreeCreate() 
 {
-    BinaryTree* tree = (BinaryTree*)malloc(sizeof(BinaryTree));
+    BinaryTree* tree = malloc(sizeof(BinaryTree));
     if (tree) 
     {
         tree->root = NULL;
@@ -116,7 +116,7 @@ void binaryTreeDestroy(BinaryTree* tree, bool free_data)
 
 BinaryTreeNode* binaryTreeBSTInsert(BinaryTree* tree, void* data, CompareFunc compare)
 {
-    BinaryTreeNode* new_node = (BinaryTreeNode*)malloc(sizeof(BinaryTreeNode));
+    BinaryTreeNode* new_node = malloc(sizeof(BinaryTreeNode));
     new_node->data = data;
     new_node->left = new_node->right = NULL;
 
