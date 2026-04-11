@@ -264,7 +264,7 @@ void assertBinSizes(CTest* test, int numElements, double elements[], int numBins
         if (size < 1)
         {
             newTest->testStatus = FAILED;
-            asprintf(&(newTest->statusMessage), "AssertionError: bin %d is not full: %f", binIdx, size);
+            asprintf(&(newTest->statusMessage), "AssertionError: bin %d is not full: %lf", binIdx, size);
         }
     }
     endTest(test, newTest);

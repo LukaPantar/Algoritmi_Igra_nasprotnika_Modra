@@ -265,8 +265,8 @@ void bstAlg(Elements* elementsData, BinsCollection* bins)
     BinaryTree* openBins = binaryTreeCreate();
     int currentBinIdx = 0;
     const double MAX_OVERFLOW = 1.0;
-    const double SCALE_RATIO = 1;
-    const double EXP_IDX = 20;
+    // const double SCALE = 1;
+    const double EXP_IDX = 5;
 
     for (int elIdx = 0; elIdx < elementsData->count; elIdx++)
     {
@@ -274,12 +274,9 @@ void bstAlg(Elements* elementsData, BinsCollection* bins)
         
         // calculate dynamic threshold
         // double progress = (double)elIdx / elementsData->count;
-        double openBinsRatio = (double) openBins->size / (double) (elementsData->count - elIdx);
+        double openBinsRatio = (double) openBins->size / (double) (elementsData->count - elIdx + 10);
         double expp = 1.0 - exp(-EXP_IDX * openBinsRatio);
-        // double currentThreshold = MAX_OVERFLOW * progress;
         double currentThreshold = MAX_OVERFLOW * expp;
-        
-        // double currentThreshold = MAX_OVERFLOW * openBinsRatio * SCALE_RATIO;
 
         // find best fit
         BinaryTreeNode* bestBinNode = NULL;
