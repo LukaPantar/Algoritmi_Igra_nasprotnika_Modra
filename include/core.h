@@ -12,7 +12,7 @@
 // #define DEBUG_TRACE
 // #define DEBUG_TRACE_BST
 #define SAVE_OUTPUT_FILE
-#define EXTRA_STATS
+// #define EXTRA_STATS
 
 // STRUCTS ////////////////////////////////////////////////////////////////////////////////
 typedef struct _Elements_

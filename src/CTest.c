@@ -97,6 +97,9 @@ int main()
     testBins(test, "linear");
     testBins(test, "normal");
     testBins(test, "exponential");
+    
+    // Custom file for manual tests
+    testBins(test, "manual_test");
       
     run(test);                  // Run test
 }
