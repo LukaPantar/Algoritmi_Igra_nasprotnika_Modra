@@ -59,7 +59,7 @@ void testBins(CTest *test, char* fname)
     int ch;
     while ((ch = fgetc(outFptr)) != '\n' && ch != EOF);
     
-    char line[256];
+    char line[1024];
     for (int i = 0; i < numBins; i++) 
     {
         int j = 0;
