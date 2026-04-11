@@ -6,7 +6,7 @@
 /* Absolute Value */
 static inline int i_abs(int v) { return v < 0 ? -v : v; }
 static inline float f_abs(float v) { return fabsf(v); }
-static inline double d_abs(double v) { return fabs(v); }
+static inline double d_abs(double v) { return dabs(v); }
 
 #define abs(v) _Generic((v), \
     int: i_abs,                \
@@ -21,8 +21,8 @@ static inline int i_max(int a, int b) { return a > b ? a : b; }
 static inline float f_min(float a, float b) { return fminf(a, b); }
 static inline float f_max(float a, float b) { return fmaxf(a, b); }
 
-static inline double d_min(double a, double b) { return fmin(a, b); }
-static inline double d_max(double a, double b) { return fmax(a, b); }
+static inline double d_min(double a, double b) { return dmin(a, b); }
+static inline double d_max(double a, double b) { return dmax(a, b); }
 
 #define min(a, b) _Generic((a), \
     int: i_min,                   \
@@ -46,7 +46,7 @@ static inline float f_clamp(float v, float lo, float hi) {
 }
 
 static inline double d_clamp(double v, double lo, double hi) {
-    return fmin(fmax(v, lo), hi);
+    return dmin(dmax(v, lo), hi);
 }
 
 #define clamp(v, lo, hi) _Generic((v), \
