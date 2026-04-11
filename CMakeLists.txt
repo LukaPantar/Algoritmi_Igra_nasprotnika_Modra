@@ -13,6 +13,7 @@ target_include_directories(core PUBLIC include)
 
 add_executable(${PROJECT_NAME} src/main.c)
 target_link_libraries(game_of_adversary core)
+target_link_libraries(game_of_adversary m)
 
 target_compile_options(${PROJECT_NAME} PRIVATE -O0 -g)
 
@@ -22,6 +23,7 @@ enable_testing()
 
 add_executable(test_runner src/CTest.c)
 target_link_libraries(test_runner core)
+target_link_libraries(test_runner m)
 
 target_compile_options(test_runner PRIVATE -O0 -g)
 

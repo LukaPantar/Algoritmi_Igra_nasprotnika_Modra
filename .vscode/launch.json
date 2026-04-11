@@ -43,7 +43,9 @@
             "args": [
                 "--test-dir",
                 "build",
-                "--output-on-failure"
+                "--output-on-failure",
+                "-VV"
+                
             ],
             "cwd": "${workspaceFolder}",
             "MIMode": "gdb",

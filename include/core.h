@@ -32,6 +32,13 @@ typedef struct _OutputData_
     int validBinCount;     // number of valid bins (el sum >= 1)
     int* binOffsets;  // per bin element offsets
     int* sortedElementIdxs; // element indices sorted by bin idx
+
+    // Extra stats
+    int invalidBinCount;
+    double maxOverflow;
+    double averageOverflow;
+    double maxUnderflow;
+    double averageUnderflow;
 } OutputData;
 
 
@@ -39,6 +46,7 @@ typedef struct _OutputData_
 // #define DEBUG_TRACE
 // #define DEBUG_TRACE_BST
 #define SAVE_OUTPUT_FILE
+#define EXTRA_STATS
 
 // Define algorith for solving (if more than one is defined, the first defined will be used)
 // #define NAIVE_ALG

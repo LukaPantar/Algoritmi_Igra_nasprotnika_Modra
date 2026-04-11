@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 // IMPORTED LIBS //////////////////////////////////////////////////////////////////////////
 #include "mathutils.h"
@@ -80,6 +81,34 @@ void processOutput(Elements* elementsData, BinsCollection* bins, OutputData* out
             outData->validBinCount++;
         }
     }
+
+#ifdef EXTRA_STATS
+    outData->invalidBinCount = bins->count - outData->validBinCount;
+    
+    outData->maxOverflow = 0;
+    outData->maxUnderflow = 0;
+    outData->averageOverflow = 0;
+    outData->averageUnderflow = 0;
+
+    for (int i = 0; i < bins->count; i++)
+    {
+        double diff = abs(bins->array[i].sum - 1.0);
+        if (bins->array[i].sum >= 1.0)
+        {
+            if (outData->maxOverflow < diff)
+                outData->maxOverflow = diff;
+            outData->averageOverflow += diff;
+        }
+        else
+        {
+            if (outData->maxUnderflow < diff)
+                outData->maxUnderflow = diff;
+            outData->averageUnderflow += diff;
+        }
+    }
+    outData->averageOverflow /= outData->validBinCount;
+    outData->averageUnderflow /= outData->invalidBinCount;
+#endif  // EXTRA_STATS
 
     // count bin offsets
     int offsetsCount = bins->count + 1;
@@ -235,15 +264,22 @@ void bstAlg(Elements* elementsData, BinsCollection* bins)
 {
     BinaryTree* openBins = binaryTreeCreate();
     int currentBinIdx = 0;
-    const double MAX_OVERFLOW = 0.6;
+    const double MAX_OVERFLOW = 1.0;
+    const double SCALE_RATIO = 1;
+    const double EXP_IDX = 20;
 
     for (int elIdx = 0; elIdx < elementsData->count; elIdx++)
     {
         double item = elementsData->array[elIdx];
         
         // calculate dynamic threshold
-        double progress = (double)elIdx / elementsData->count;
-        double currentThreshold = MAX_OVERFLOW * progress;
+        // double progress = (double)elIdx / elementsData->count;
+        double openBinsRatio = (double) openBins->size / (double) (elementsData->count - elIdx);
+        double expp = 1.0 - exp(-EXP_IDX * openBinsRatio);
+        // double currentThreshold = MAX_OVERFLOW * progress;
+        double currentThreshold = MAX_OVERFLOW * expp;
+        
+        // double currentThreshold = MAX_OVERFLOW * openBinsRatio * SCALE_RATIO;
 
         // find best fit
         BinaryTreeNode* bestBinNode = NULL;
@@ -312,6 +348,13 @@ void printResults(char* algorithmName, OutputData outData, double computeTime, d
     printf("Number of valid bins: %d\n", outData.validBinCount);
     printf("Total time: %lf s\n", readFileTime + computeTime + writeFileTime);
     printf("------------------------------------------------------------\n");
+#ifdef EXTRA_STATS
+    printf("EXTRA STATS\n");
+    printf("Number of invalid bins: %d\n", outData.invalidBinCount);
+    printf("Average overflow: %lf [Max: %lf]\n", outData.averageOverflow, outData.maxOverflow);
+    printf("Average underflow: %lf [Max: %lf]\n", outData.averageUnderflow, outData.maxUnderflow);
+    printf("------------------------------------------------------------\n");
+#endif  // EXTRA_STATS
     printf("\n");
 }
 
@@ -340,7 +383,7 @@ void mainAlgorithm(char* inFpath)
     char* algorithmName = "Binary Search Tree";
     bstAlg(&elementsData, &bins);
 #else
-    printf("Please define an algorithm in user defines.");
+    printf("Please define an algorithm in user defines.\n");
     exit(EXIT_FAILURE)
 #endif  // *_ALG
 
