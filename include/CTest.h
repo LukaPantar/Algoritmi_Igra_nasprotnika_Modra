@@ -7,13 +7,14 @@
 #include <string.h>
 #include <time.h>
 #include <stdbool.h>
+#include <float.h>
 
 // MACROS ////////////////////////////////////////////////////////////////////////////////
 #define OUT_FEXT ".out"
 #define TXT_FEXT ".txt"
 #define TESTS_FPATH "../tests/"
-
 #define MAX_FPATH_LEN 100
+#define FULL_BIN (1.0 - DBL_EPSILON)  // due to inaccurate IEEE 754 sum
 
 // FUNCTIONS //////////////////////////////////////////////////////////////////////////////
 /**
@@ -261,7 +262,7 @@ void assertBinSizes(CTest* test, int numElements, double elements[], int numBins
             size += elements[bins[binIdx][elIdx] - 1];
         }
 
-        if (size < 1)
+        if (size < FULL_BIN)
         {
             newTest->testStatus = FAILED;
             asprintf(&(newTest->statusMessage), "AssertionError: bin %d is not full: %lf", binIdx, size);

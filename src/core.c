@@ -82,7 +82,7 @@ void processOutput(Elements* elementsData, BinsCollection* bins, OutputData* out
     outData->validBinFlags = malloc(bins->count * sizeof(bool));
     for (int i = 0; i < bins->count; i++)
     {
-        bool isValid = bins->array[i].sum >= 1.0;
+        bool isValid = bins->array[i].sum >= FULL_BIN;
         outData->validBinFlags[i] = isValid;
         if (isValid)
             outData->validBinCount++;
@@ -98,8 +98,8 @@ void processOutput(Elements* elementsData, BinsCollection* bins, OutputData* out
 
     for (int i = 0; i < bins->count; i++)
     {
-        double diff = abs(bins->array[i].sum - 1.0);
-        if (bins->array[i].sum >= 1.0)
+        double diff = abs(bins->array[i].sum - FULL_BIN);
+        if (bins->array[i].sum >= FULL_BIN)
         {
             if (outData->maxOverflow < diff)
                 outData->maxOverflow = diff;
@@ -184,7 +184,7 @@ void naiveAlg(Elements* elementsData, BinsCollection* bins)
 
     for (int elIdx = 0; elIdx < elementsData->count; elIdx++)
     {
-        if (bins->array[currentBinIdx].sum >= 1.0)
+        if (bins->array[currentBinIdx].sum >= FULL_BIN)
         {
             initBin(bins, ++currentBinIdx);
         }
@@ -213,20 +213,20 @@ void thresholdAlg(Elements* elementsData, BinsCollection* bins)
 
         // find best fit
         Node* bestBinNode = NULL;
-        double minOverflow = 1.0;
+        double minOverflow = FULL_BIN;
 
         LINKEDLIST_FOREACH(binNode, openBins)
         {
             Bin* b = (Bin*)binNode->data;
             double newSum = b->sum + item;
-            if (newSum < 1.0)
+            if (newSum < FULL_BIN)
             {
                 // insert here
                 bestBinNode = binNode;
                 break;
             }
 
-            double overflow = newSum - 1.0;
+            double overflow = newSum - FULL_BIN;
             if (overflow < minOverflow && overflow <= currentThreshold)
             {
                 minOverflow = overflow;
@@ -240,7 +240,7 @@ void thresholdAlg(Elements* elementsData, BinsCollection* bins)
             // insert to best fit bin
             Bin* b = (Bin*)bestBinNode->data;
             insertElement(elementsData, bins, b->idx, elIdx);
-            if (b->sum >= 1.0)
+            if (b->sum >= FULL_BIN)
             {
                 likedListRemoveNode(openBins, bestBinNode, false);
             }
@@ -270,7 +270,7 @@ void bstAlg(Elements* elementsData, BinsCollection* bins)
 {
     BinaryTree* openBins = binaryTreeCreate();
     int currentBinIdx = 0;
-    const double MAX_OVERFLOW = 1.0;
+    const double MAX_OVERFLOW = FULL_BIN;
     // const double SCALE = 1;
     const double EXP_IDX = 5;
 
@@ -281,13 +281,13 @@ void bstAlg(Elements* elementsData, BinsCollection* bins)
         // calculate dynamic threshold
         // double progress = (double)elIdx / elementsData->count;
         double openBinsRatio = (double) openBins->size / (double) (elementsData->count - elIdx + 10);
-        double expp = 1.0 - exp(-EXP_IDX * openBinsRatio);
+        double expp = FULL_BIN - exp(-EXP_IDX * openBinsRatio);
         double currentThreshold = MAX_OVERFLOW * expp;
 
         // find best fit
         BinaryTreeNode* bestBinNode = NULL;
         BinaryTreeNode* current = openBins->root;
-        double targetBinSum = 1.0 - item;
+        double targetBinSum = FULL_BIN - item;
 
         while (current != NULL)
         {
@@ -295,9 +295,9 @@ void bstAlg(Elements* elementsData, BinsCollection* bins)
             Bin* b = (Bin*)current->data;
             
             double potentialSum = b->sum + item;
-            double overflow = potentialSum - 1.0;
+            double overflow = potentialSum - FULL_BIN;
 
-            if (potentialSum <= 1.0 || overflow <= currentThreshold)
+            if (potentialSum <= FULL_BIN || overflow <= currentThreshold)
             {
                 if (bestBinNode == NULL || abs(b->sum - targetBinSum) < abs(((Bin*)bestBinNode->data)->sum - targetBinSum))
                     bestBinNode = current;
@@ -318,8 +318,8 @@ void bstAlg(Elements* elementsData, BinsCollection* bins)
             binaryTreeBSTRemoveNode(openBins, bestBinNode, false);
             insertElement(elementsData, bins, b->idx, elIdx);
 
-            // reinsert if sum < 1.0, otherwise the bin is filled
-            if (b->sum < 1.0)
+            // reinsert if sum < FULL_BIN, otherwise the bin is filled
+            if (b->sum < FULL_BIN)
                 binaryTreeBSTInsert(openBins, b, compareBins);
         }
         else
@@ -327,7 +327,7 @@ void bstAlg(Elements* elementsData, BinsCollection* bins)
             // init new bin
             Bin* newBin = initBin(bins, currentBinIdx++);
             insertElement(elementsData, bins, newBin->idx, elIdx);
-            if (newBin->sum < 1.0)
+            if (newBin->sum < FULL_BIN)
                 binaryTreeBSTInsert(openBins, newBin, compareBins);
         }
 

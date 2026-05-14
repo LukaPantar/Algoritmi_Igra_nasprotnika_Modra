@@ -3,13 +3,15 @@
 #define _CORE_H_
 
 #include <stdbool.h>
+#include <float.h>
 
 // MACROS ////////////////////////////////////////////////////////////////////////////////
 #define OUT_FEXT ".out"
 #define MAX_FPATH_LEN 100
+#define FULL_BIN (1.0 - DBL_EPSILON)  // due to inaccurate IEEE 754 sum
 
 // USER DEFINES ////////////////////////////////////////////////////////////////////////////
-// #define DEBUG_TRACE
+#define DEBUG_TRACE
 // #define DEBUG_TRACE_BST
 #define SAVE_OUTPUT_FILE
 // #define EXTRA_STATS
