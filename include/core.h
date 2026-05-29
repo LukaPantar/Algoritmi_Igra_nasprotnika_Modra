@@ -11,10 +11,10 @@
 #define FULL_BIN (1.0 - DBL_EPSILON)  // due to inaccurate IEEE 754 sum
 
 // USER DEFINES ////////////////////////////////////////////////////////////////////////////
-#define DEBUG_TRACE
+// #define DEBUG_TRACE
 // #define DEBUG_TRACE_BST
 #define SAVE_OUTPUT_FILE
-// #define EXTRA_STATS
+#define EXTRA_STATS
 
 // STRUCTS ////////////////////////////////////////////////////////////////////////////////
 typedef struct _Elements_
